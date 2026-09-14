@@ -1,0 +1,37 @@
+[
+  {
+    "question": "How many movies are in the database?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT COUNT(*) FROM movies;",
+    "expected_result": "7"
+  },
+  {
+    "question": "What movies were released after 2015?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT title FROM movies WHERE release_year > 2015;",
+    "expected_result": "Dune, Parasite, Lady Bird, Oppenheimer"
+  },
+  {
+    "question": "Which movies were directed by Christopher Nolan?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.movie_id = md.movie_id JOIN directors d ON md.director_id = d.director_id WHERE d.name = 'Christopher Nolan';",
+    "expected_result": "Inception, Interstellar, Oppenheimer"
+  },
+  {
+    "question": "Which directors have the highest average movie rating?",
+    "difficulty": "hard",
+    "category": "aggregation",
+    "expected_sql": "SELECT d.name, AVG(r.rating) AS avg_rating FROM directors d JOIN movie_directors md ON d.director_id = md.director_id JOIN ratings r ON md.movie_id = r.movie_id GROUP BY d.name ORDER BY avg_rating DESC;",
+    "expected_result": "Hayao Miyazaki"
+  },
+  {
+    "question": "Which genre has the highest average rating?",
+    "difficulty": "hard",
+    "category": "aggregation",
+    "expected_sql": "SELECT g.name, AVG(r.rating) AS avg_rating FROM genres g JOIN movie_genres mg ON g.genre_id = mg.genre_id JOIN ratings r ON mg.movie_id = r.movie_id GROUP BY g.name ORDER BY avg_rating DESC LIMIT 1;",
+    "expected_result": "Animation"
+  }
+]

@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16
+    container_name: movies_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-movies}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-movies}
+      POSTGRES_DB: ${POSTGRES_DB:-moviesdb}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Files in /docker-entrypoint-initdb.d/ run automatically on first boot,
+      # in alphabetical order, so schema.sql loads before seed.sql.
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-movies} -d ${POSTGRES_DB:-moviesdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

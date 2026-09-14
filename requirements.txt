@@ -1,0 +1,23 @@
+# --- LLM orchestration ---
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0      # OpenRouter is used via the OpenAI-compatible endpoint
+langgraph>=0.2.0
+
+# --- Database ---
+SQLAlchemy>=2.0.0
+psycopg2-binary>=2.9.9
+
+# --- Application ---
+streamlit>=1.38.0
+fastapi>=0.115.0             # optional API layer (see project doc, section 3)
+uvicorn>=0.30.0
+
+# --- Utilities ---
+python-dotenv>=1.0.1
+pydantic>=2.8.0
+pandas>=2.2.0               # evaluation results / results.csv
+sqlparse>=0.5.0            # lightweight SQL parsing for the validation node
+
+# --- Dev / testing ---
+pytest>=8.0.0
