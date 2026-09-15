@@ -39,7 +39,6 @@ Everything is wired through two shared singletons:
 
 ```
 .
-├── .streamlit/          # theme config (config.toml) for the archive-desk UI
 ├── app/                # Streamlit UI (presentation layer)
 ├── agent/               # LangGraph workflow — the orchestration layer
 │   └── nodes/           # one module per graph node
@@ -187,12 +186,10 @@ also calls it directly.
 Two more functions wrap `answer_question` for the UI without changing its
 contract:
 - `run_agent(question)` — shapes the final state into the flat
-  `{sql, columns, rows, answer, attempts, latency_s, error}` dict
-  [app/streamlit_app.py](../app/streamlit_app.py) renders per turn
-  (`latency_s` is wall-clock time for the whole call, timed the same way as
-  [evaluation/evaluate.py](../evaluation/evaluate.py)), and never raises
-  (any exception, e.g. a missing API key or unreachable database, is
-  captured into `error` instead of propagating).
+  `{sql, columns, rows, answer, attempts, error}` dict
+  [app/streamlit_app.py](../app/streamlit_app.py) renders per turn, and
+  never raises (any exception, e.g. a missing API key or unreachable
+  database, is captured into `error` instead of propagating).
 - `_credentials_available()` — a cheap presence check on
   `settings.OPENROUTER_API_KEY` / `settings.DATABASE_URL`, purely
   informational (drives the sidebar's "real agent active" vs. "not
@@ -285,29 +282,15 @@ the actual model calls — nodes never call `ChatOpenAI` directly.
 
 ## 7. App layer — [app/streamlit_app.py](../app/streamlit_app.py)
 
-Framed as a film archive's request desk rather than a generic chatbot
-(deliberate design choice — see the file's module docstring): each question
-becomes a numbered "ticket" (`st.container(border=True)`) with three
-sections in order — **query** (the generated SQL, `st.code`), **result**
-(the row table, `st.dataframe`), **verdict** (the final answer, plus a
-`{attempts} repair attempt(s) · {latency_s}s` meta line). Theming lives in
-[.streamlit/config.toml](../.streamlit/config.toml) (base colors) plus a
-`st.markdown(..., unsafe_allow_html=True)` block at the top of the file for
-fonts and a few custom classes (`.archive-hero`, `.ticket-*`, `.verdict`,
-`.not-found`) and sidebar-button restyling. That CSS is scoped to
-Streamlit's `data-testid` hooks and to classes the app owns outright, so a
-hook that's shifted in a different Streamlit version just fails to match
-(no styling applied there) rather than breaking the app.
-
-A sidebar ("the desk") offers example questions as one-click buttons and a
-"clear the desk" reset; it also shows a badge from `_credentials_available()`
-saying whether `OPENROUTER_API_KEY`/`DATABASE_URL` look *configured* (a
-presence check, not a validity check — see
-[docs/RUNBOOK.md](RUNBOOK.md) for diagnosing an actually-invalid key).
-There is no separate mock agent — `run_agent` always calls the real graph
-regardless of that badge; a missing or invalid key just means the real call
-fails and that failure surfaces as the turn's `error` (rendered as a
-brick-accented "Request could not be filled" ticket) rather than the badge
+Chat-style Streamlit UI. Per turn it renders: the question, the final
+answer, the generated SQL (inside a collapsed expander, labeled with attempt
+count), and a `pandas.DataFrame` of the result rows. A sidebar offers
+example questions as one-click buttons and a "clear conversation" reset;
+it also shows a badge from `_credentials_available()` saying whether
+`OPENROUTER_API_KEY`/`DATABASE_URL` look configured. There is no separate
+mock agent — `run_agent` always calls the real graph regardless of that
+badge; a missing or invalid key just means the real call fails and that
+failure surfaces as the turn's `error` (§5.2) rather than the badge
 switching anything off.
 
 The app imports `run_agent` and `_credentials_available` from `agent.graph`
