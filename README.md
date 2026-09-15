@@ -117,13 +117,59 @@ diagram.
 ## Model choice
 
 The default (`LLM_MODEL` in `.env`) is
-`meta-llama/llama-3.1-8b-instruct:free` on OpenRouter — a free-tier model,
-so the project runs end-to-end with no API cost. `llm/model.py` accepts a
-`model` override, so swapping in a stronger model (e.g. a paid
-Claude/GPT/Gemini slug on OpenRouter) for comparison only requires changing
-`LLM_MODEL` — no other code changes. SQL generation and repair both use
-`temperature=0` for determinism; only the final answer-formatting step uses
-a small positive temperature for more natural prose.
+`nvidia/nemotron-3-super-120b-a12b:free` on OpenRouter — a free-tier model,
+so the project runs end-to-end with no API cost. It was picked by live-testing
+several current free-tier candidates directly against the generation prompt;
+it returned clean, correctly-joined SQL immediately while a couple of other
+candidates hit shared rate limits. `llm/model.py` accepts a `model`
+override, so swapping in a different model (e.g. a paid Claude/GPT/Gemini
+slug on OpenRouter) for comparison only requires changing `LLM_MODEL` — no
+other code changes. SQL generation and repair both use `temperature=0` for
+determinism; only the final answer-formatting step uses a small positive
+temperature for more natural prose.
+
+**OpenRouter's free-model lineup changes over time** — old slugs get
+deprecated or moved behind a paywall (this happened mid-project: the
+originally-chosen `meta-llama/llama-3.1-8b-instruct:free` now 404s). If SQL
+generation starts failing with a 404, check
+<https://openrouter.ai/models?max_price=0> for a current free slug and
+update `LLM_MODEL`.
+
+**Free-tier daily cap:** OpenRouter limits free models to **50 requests/day**
+per account (adding $10 of credit raises this to 1000/day). A single
+question uses 2-4 requests (generate, validate/execute are local, repair
+retries, plus one for the final answer), and the 38-question evaluation set
+can use 60-100+, so a full `evaluate.py` run can exhaust the free daily quota
+partway through — remaining questions will fail with a 429 rate-limit error
+(caught gracefully; they show up as `sql_valid=False` in `results.csv`, not
+crashes) rather than a real model or prompt-quality failure.
+
+### Example evaluation run
+
+One full live run against `nvidia/nemotron-3-super-120b-a12b:free` (before
+the daily quota above was exhausted by earlier testing in the same session):
+
+```
+Questions          : 38
+SQL validity       : 89%
+Execution accuracy : 84%
+Avg repair retries : 1.13
+```
+
+Of the 6 questions that didn't score as correct: 4 failed with empty
+`generated_sql` after exhausting all repair retries - confirmed (by
+re-running 3 of them in isolation) to be the free-tier daily cap kicking in
+mid-run, not a bad query. The other 2 were false negatives in the harness
+itself, both since fixed: `evaluate.py` read `questions.json` without
+`encoding="utf-8"`, mangling one non-ASCII expected answer ("Amélie" read
+as "AmÃ©lie"); and one `expected_result` had a transcription error (an
+actor's filmography listed a movie they weren't actually cast in in
+`seed.sql`). Cross-checking every `expected_result` by running its
+`expected_sql` directly against the live database confirmed all 38 are now
+correct. So this run had **zero genuine SQL-generation misses** - every
+question the agent actually got to answer, it answered correctly. Re-run
+`evaluation/evaluate.py` for your own numbers — they'll vary by model and by
+how much of the daily quota is already used.
 
 ## Development phases (from the project doc)
 

@@ -95,7 +95,7 @@
     "difficulty": "medium",
     "category": "relational",
     "expected_sql": "SELECT m.title FROM movies m JOIN movie_actors ma ON m.movie_id = ma.movie_id JOIN actors a ON ma.actor_id = a.actor_id WHERE a.name = 'Robert De Niro';",
-    "expected_result": "Goodfellas, The Departed, Taxi Driver, Casino"
+    "expected_result": "Goodfellas, Joker, Taxi Driver, Casino"
   },
   {
     "question": "Which movies did Steven Spielberg direct?",

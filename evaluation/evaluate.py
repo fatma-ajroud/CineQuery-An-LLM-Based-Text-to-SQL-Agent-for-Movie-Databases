@@ -54,7 +54,7 @@ def _is_execution_correct(expected: str, result_text: str) -> bool:
 
 
 def evaluate() -> pd.DataFrame:
-    questions = json.loads(QUESTIONS_PATH.read_text())
+    questions = json.loads(QUESTIONS_PATH.read_text(encoding="utf-8"))
     records = []
 
     for item in questions:
