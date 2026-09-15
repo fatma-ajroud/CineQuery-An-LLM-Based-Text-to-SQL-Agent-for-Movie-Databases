@@ -1,0 +1,11 @@
+# Archive-desk theme. See app/streamlit_app.py for the full design rationale.
+[theme]
+base = "light"
+primaryColor = "#B8912E"          # brass - the one accent color, used sparingly
+backgroundColor = "#E4E1D3"       # parchment-stone paper
+secondaryBackgroundColor = "#DAD5C3"  # slightly darker parchment (sidebar, panels)
+textColor = "#16231F"             # bottle-green ink
+font = "sans serif"
+
+[server]
+headless = true

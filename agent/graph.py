@@ -14,6 +14,8 @@ Member 3 (LangGraph & SQL Agent) owns this file.
 """
 from __future__ import annotations
 
+import time
+
 from langgraph.graph import END, START, StateGraph
 
 from agent.nodes.analyze import analyze_node
@@ -126,6 +128,7 @@ def run_agent(question: str) -> dict:
     unreachable database) is captured into `error` instead of crashing the
     app.
     """
+    start = time.perf_counter()
     try:
         state = answer_question(question)
     except Exception as exc:  # noqa: BLE001 - surfaced to the UI, not raised
@@ -136,6 +139,7 @@ def run_agent(question: str) -> dict:
             "answer": "",
             "attempts": 0,
             "error": str(exc),
+            "latency_s": time.perf_counter() - start,
         }
 
     rows = state.get("query_result") or []
@@ -150,6 +154,7 @@ def run_agent(question: str) -> dict:
         "answer": state.get("final_answer", ""),
         "attempts": state.get("retry_count", 0),
         "error": error,
+        "latency_s": time.perf_counter() - start,
     }
 
 
