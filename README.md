@@ -45,7 +45,7 @@ movie-text-to-sql/
 ├── database/         # schema.sql, curated 50-movie seed.sql, README (ER diagram)
 ├── evaluation/       # questions.json (38 Qs), evaluate.py, results.csv
 ├── tests/            # smoke tests
-├── docs/             # ARCHITECTURE.md — file-by-file technical reference
+├── docs/             # ARCHITECTURE.md + RUNBOOK.md
 ├── config.py         # env-driven settings
 ├── db.py             # SQLAlchemy engine + schema introspection
 ├── docker-compose.yml
@@ -55,7 +55,9 @@ movie-text-to-sql/
 ```
 
 For a detailed, file-by-file walkthrough of how every module is wired
-together, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+together, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). For day-to-day
+commands and troubleshooting (rate limits, deprecated model slugs, Docker
+PATH issues, etc.), see [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ## Quick start
 

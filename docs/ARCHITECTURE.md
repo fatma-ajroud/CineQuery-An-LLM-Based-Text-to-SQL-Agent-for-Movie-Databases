@@ -3,7 +3,8 @@
 Technical reference for how this repository is put together: what each
 folder/file does, how modules depend on each other, and how a question flows
 from the UI to an answer. For setup/run instructions see the root
-[README.md](../README.md).
+[README.md](../README.md); for day-to-day commands and troubleshooting see
+[RUNBOOK.md](RUNBOOK.md).
 
 ## 1. System overview
 
@@ -45,6 +46,7 @@ Everything is wired through two shared singletons:
 ├── database/             # SQL DDL + seed data, loaded by Postgres on boot
 ├── evaluation/           # offline accuracy harness + fixed question set
 ├── tests/                 # pytest smoke tests (no live DB/LLM required)
+├── docs/                  # this file, plus RUNBOOK.md (day-to-day ops/troubleshooting)
 ├── config.py              # env-driven settings singleton
 ├── db.py                  # SQLAlchemy engine, schema introspection, query execution
 ├── docker-compose.yml     # single-service Postgres for local dev
@@ -62,7 +64,7 @@ everywhere else (`from config import settings`). Fields:
 |---|---|
 | `OPENROUTER_API_KEY` | Auth for OpenRouter's OpenAI-compatible API |
 | `OPENROUTER_BASE_URL` | Defaults to `https://openrouter.ai/api/v1` |
-| `LLM_MODEL` | Model slug, e.g. `meta-llama/llama-3.1-8b-instruct:free` |
+| `LLM_MODEL` | Model slug, default `nvidia/nemotron-3-super-120b-a12b:free` (see [docs/RUNBOOK.md](RUNBOOK.md) if it 404s — OpenRouter's free lineup changes over time) |
 | `OPENROUTER_APP_NAME` / `OPENROUTER_SITE_URL` | Sent as OpenRouter attribution headers |
 | `DATABASE_URL` | SQLAlchemy connection string (`postgresql+psycopg2://...`) |
 | `MAX_SQL_REPAIR_RETRIES` | Cap on the graph's repair loop (default `3`) |
@@ -169,7 +171,10 @@ Concretely:
 - `interpret_node` (defined inline in `graph.py`, not under `nodes/`) turns
   `query_result` into an answer via `llm.sql_generator.format_answer`, or —
   if the state has no result — builds an apology message that reports the
-  last error and how many repairs were attempted.
+  last error and how many repairs were attempted. If `format_answer` itself
+  raises (e.g. the LLM call fails after a successful query), that's caught
+  too — the answer falls back to reporting the row count instead of losing
+  a correct result to a formatting-step crash.
 
 `graph_app = build_graph()` is compiled **once at import time** and reused.
 `answer_question(question)` is the core public entry point:
@@ -200,6 +205,19 @@ contract:
 | [validate.py](../agent/nodes/validate.py) | `validate_node` | Static, no-DB-execution safety check (see §5.4). |
 | [execute.py](../agent/nodes/execute.py) | `execute_node` | Runs the SQL via `db.run_query`; catches any exception into `database_error` rather than raising. |
 | [repair.py](../agent/nodes/repair.py) | `repair_node` | Calls `llm.sql_generator.repair_sql` with the failing SQL + error, increments `retry_count`. |
+
+**LLM-failure resilience:** `generate_sql_node` and `repair_node` both wrap
+their LLM call in a try/except. A raised exception (bad API key, an
+OpenRouter rate limit, a deprecated model slug, a network blip) is turned
+into an empty `generated_sql` plus a `validation_error` describing the
+failure — which `validate_node` then rejects for the ordinary "empty SQL"
+reason, so the graph's normal repair-or-give-up routing (§5.2) handles it
+exactly like a bad query, instead of the exception propagating up and
+crashing the whole `answer_question` call. This was added after a live run
+surfaced it as a real gap: without it, a single LLM failure mid-run would
+have killed the entire 38-question `evaluate.py` batch. See
+[docs/RUNBOOK.md](RUNBOOK.md) for how to tell this apart from a genuine
+SQL-generation miss.
 
 ### 5.4 Validation rules ([validate.py](../agent/nodes/validate.py))
 
@@ -268,8 +286,12 @@ Chat-style Streamlit UI. Per turn it renders: the question, the final
 answer, the generated SQL (inside a collapsed expander, labeled with attempt
 count), and a `pandas.DataFrame` of the result rows. A sidebar offers
 example questions as one-click buttons and a "clear conversation" reset;
-it also reports whether the "real" agent or a mock is active via
-`_credentials_available()`.
+it also shows a badge from `_credentials_available()` saying whether
+`OPENROUTER_API_KEY`/`DATABASE_URL` look configured. There is no separate
+mock agent — `run_agent` always calls the real graph regardless of that
+badge; a missing or invalid key just means the real call fails and that
+failure surfaces as the turn's `error` (§5.2) rather than the badge
+switching anything off.
 
 The app imports `run_agent` and `_credentials_available` from `agent.graph`
 (§5.2) rather than calling `answer_question` directly — `run_agent` wraps
@@ -329,9 +351,7 @@ the full graph against a real Postgres instance or a live LLM.
 ## 10. End-to-end request flow
 
 1. User submits a question in the Streamlit chat input.
-2. UI calls into the agent entry point (`answer_question`, per the
-   committed graph — see the known-issue note in §7 for the current
-   uncommitted mismatch).
+2. UI calls `run_agent(question)` (§5.2), which calls `answer_question`.
 3. `analyze` trims the question.
 4. `schema` introspects Postgres live and attaches the schema text.
 5. `generate_sql` calls the LLM with system + generation prompts →
@@ -347,3 +367,9 @@ the full graph against a real Postgres instance or a live LLM.
 8. `interpret` either calls `format_answer` (LLM turns rows into prose) or
    builds an apology string citing the last error and retry count.
 9. UI renders the answer, the SQL used, and the result table.
+
+At every step that calls the LLM (`generate_sql`, `repair`, `interpret`'s
+`format_answer`), a raised exception is caught and folded into the same
+error/retry machinery used for validation and execution failures (§5.3) —
+so an API outage never crashes the run, it just exhausts the repair budget
+and produces a graceful apology instead.

@@ -32,3 +32,6 @@ evaluation/results.csv
 
 # PostgreSQL data volume (if mounted locally)
 pgdata/
+
+# Claude Code scratch/output files - not part of the project
+Claude outputs/

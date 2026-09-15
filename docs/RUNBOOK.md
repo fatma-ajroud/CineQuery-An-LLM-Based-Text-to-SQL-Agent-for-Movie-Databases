@@ -1,0 +1,128 @@
+# Runbook
+
+Day-to-day commands and troubleshooting for running this project locally.
+For what the code does and how it's wired, see
+[ARCHITECTURE.md](ARCHITECTURE.md). For first-time setup, see the root
+[README.md](../README.md#quick-start).
+
+## Prerequisites
+
+- Docker Desktop, installed and **running** (the whale icon in the system
+  tray/menu bar, not just installed).
+- Python 3.11+.
+- An OpenRouter API key (free) — see the README's Quick start, step 2.
+
+## Day-to-day commands
+
+Run these from the repository root.
+
+### Database
+
+```bash
+docker compose up -d db          # start Postgres (loads schema+seed on first boot only)
+docker compose ps                 # check it's "healthy"
+docker compose logs db            # see init/query logs
+docker compose down                # stop the container, keep data
+docker compose down -v             # stop AND wipe the data volume (forces reseed next start)
+```
+
+Reload the seed data without wiping the volume (e.g. after editing
+`database/seed.sql` — the init scripts only run on first boot):
+
+```bash
+docker compose exec -T db psql -U movies -d moviesdb < database/schema.sql
+docker compose exec -T db psql -U movies -d moviesdb < database/seed.sql
+```
+
+Poke around the data directly:
+
+```bash
+docker compose exec db psql -U movies -d moviesdb
+# then e.g.: SELECT COUNT(*) FROM movies;
+```
+
+### Running the agent
+
+```bash
+python -m agent.graph "Which directors have directed more than three movies?"
+streamlit run app/streamlit_app.py
+```
+
+### Tests and evaluation
+
+```bash
+pytest -q                          # no DB/LLM needed
+python evaluation/evaluate.py      # needs both DB and a working API key; see below
+```
+
+## Troubleshooting
+
+**`docker: command not found` right after installing Docker Desktop** — a
+shell opened before the install won't have the updated PATH. Open a new
+terminal (or fully restart it).
+
+**`psycopg2.OperationalError: connection refused` / `could not connect`** —
+Postgres isn't up. Run `docker compose up -d db` and check
+`docker compose ps` shows `healthy`.
+
+**`401 - Missing Authentication header`** — `.env`'s `OPENROUTER_API_KEY` is
+still the `sk-or-...` placeholder, or wasn't saved. Get a real key at
+<https://openrouter.ai/keys> and put it in `.env` (not `.env.example`).
+
+**`404 - This model is unavailable for free, use this slug instead: ...`**
+— OpenRouter's free-model lineup changes over time; the slug in `LLM_MODEL`
+(`.env` or `config.py`'s default) got deprecated. Pick a current one from
+<https://openrouter.ai/models?max_price=0> — ideally test it directly first
+(see below) before relying on it for a full evaluation run.
+
+**`429 - Rate limit exceeded: free-models-per-day`** — OpenRouter caps free
+models at **50 requests/day per account**; adding $10 of credit raises this
+to 1000/day. One question uses 2-4 requests (generate, up to
+`MAX_SQL_REPAIR_RETRIES` repairs, plus the final answer-formatting call), so
+a full 38-question `evaluate.py` run can use 60-100+ and may exhaust the
+daily cap partway through. Affected questions come back with an empty
+`generated_sql` after exhausting all repair retries — this is caught
+gracefully (§ see ARCHITECTURE.md's LLM-failure resilience note), not a
+crash, but it does mean those questions score as failures in
+`results.csv` even though nothing was actually wrong with the SQL
+generation. Wait for the daily reset or add credit if you need a clean run.
+
+**Every question fails with "Sorry, I couldn't produce a valid query...
+after 3 repair attempt(s)"** — this is almost always one of the three LLM
+issues above (bad key / deprecated model / exhausted quota), not a real
+SQL-generation problem. Diagnose the actual cause with a direct call that
+skips the graph's error-swallowing:
+
+```bash
+python -c "
+from llm.model import get_llm
+from langchain_core.messages import HumanMessage
+llm = get_llm()
+r = llm.invoke([HumanMessage(content='Say OK.')])
+print(r.content)
+"
+```
+
+A clean response means the LLM path is fine and the issue is elsewhere
+(e.g. the database); an exception here shows the real error.
+
+**Streamlit sidebar shows "Running on the mock agent... not configured"**
+— despite the label, there is no mock agent (see ARCHITECTURE.md §7); this
+badge only checks that `OPENROUTER_API_KEY`/`DATABASE_URL` are non-empty in
+`.env`, not that they're valid. If both look set but questions still fail,
+work through the troubleshooting entries above.
+
+**Windows only — mojibake in non-ASCII text (e.g. "Amélie" reads
+"AmÃ©lie")** — if you add new text and see this, check that whatever read
+the file specified `encoding="utf-8"` explicitly. `evaluation/evaluate.py`
+already does this for `questions.json`; the same care is needed for any new
+UTF-8 file read added on Windows, where the platform default encoding is
+not UTF-8.
+
+## Where things persist
+
+- Database data lives in the `pgdata` Docker volume — survives
+  `docker compose down`, wiped by `docker compose down -v`.
+- `evaluation/results.csv` is regenerated by every `evaluate.py` run and is
+  git-ignored (not checked in).
+- `.env` is git-ignored; `.env.example` is the template that ships in git.
