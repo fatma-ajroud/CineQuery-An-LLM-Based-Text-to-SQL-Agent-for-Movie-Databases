@@ -31,7 +31,14 @@ from llm.sql_generator import format_answer
 def interpret_node(state: AgentState) -> AgentState:
     """Turn result rows (or a final error) into a natural-language answer."""
     if state.get("query_result") is not None:
-        answer = format_answer(state["question"], state["query_result"])
+        try:
+            answer = format_answer(state["question"], state["query_result"])
+        except Exception as exc:  # noqa: BLE001 - the query succeeded; don't crash on formatting
+            n = len(state["query_result"])
+            answer = (
+                f"The query succeeded ({n} row(s)) but the answer could not be "
+                f"summarized: {exc}"
+            )
     else:
         err = state.get("database_error") or state.get("validation_error")
         answer = (
