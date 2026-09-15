@@ -287,7 +287,8 @@ badge; it does not change `run_agent`'s behavior.
   `expected_result` computed directly from the real seed data (§4.2) rather
   than estimated.
 - [evaluate.py](../evaluation/evaluate.py) — runs `answer_question` over
-  every question, then scores two independent metrics:
+  every question (timed with `time.perf_counter()` around each call), then
+  scores three metrics per question:
   - **`sql_valid`** — did execution complete without a `database_error` and
     produce rows.
   - **`execution_correct`** — a *loose, order-independent containment*
@@ -300,8 +301,14 @@ badge; it does not change `run_agent`'s behavior.
     intentionally tolerates SQL that's phrased differently from
     `expected_sql` but returns an equivalent answer — exact SQL match is
     not required or checked here.
-  - Writes per-question rows plus a printed summary — overall, and broken
-    down by `difficulty` and `category` — to `evaluation/results.csv`
+  - **`latency_s`** — end-to-end wall-clock seconds for the whole
+    `answer_question` call, repair retries included (so a question that
+    needed 2 repairs reports the full 3-call time, not just the first
+    attempt).
+  - Writes per-question rows (including `latency_s`) plus a printed summary
+    — overall (SQL validity, execution accuracy, avg retries, and
+    mean/median/p95/max latency), and broken down by `difficulty` and
+    `category` (with mean latency per group) — to `evaluation/results.csv`
     (git-ignored/generated, not checked in).
 
 ## 9. Tests — [tests/test_smoke.py](../tests/test_smoke.py)

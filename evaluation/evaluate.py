@@ -3,6 +3,8 @@
 Runs the agent over evaluation/questions.json and measures:
   - SQL validity      : did the agent produce executable SQL?
   - execution accuracy : did the result match the expected result?
+  - latency            : wall-clock seconds per question (end to end,
+                          including any repair retries)
 
 Writes evaluation/results.csv. Execution accuracy is treated as more
 important than exact SQL match (many queries produce the same result).
@@ -13,6 +15,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from pathlib import Path
 
 # Allow running as a script from anywhere.
@@ -59,7 +62,9 @@ def evaluate() -> pd.DataFrame:
 
     for item in questions:
         q = item["question"]
+        start = time.perf_counter()
         state = answer_question(q)
+        latency_s = time.perf_counter() - start
 
         generated_sql = state.get("generated_sql", "")
         rows = state.get("query_result")
@@ -79,6 +84,7 @@ def evaluate() -> pd.DataFrame:
             "sql_valid": sql_valid,
             "execution_correct": execution_correct,
             "retry_count": state.get("retry_count", 0),
+            "latency_s": round(latency_s, 3),
             "result": result_text,
             "expected_result": expected,
         })
@@ -92,22 +98,34 @@ def evaluate() -> pd.DataFrame:
         print(f"SQL validity       : {df['sql_valid'].mean():.0%}")
         print(f"Execution accuracy : {df['execution_correct'].mean():.0%}")
         print(f"Avg repair retries : {df['retry_count'].mean():.2f}")
+        print(
+            f"Latency (s)        : "
+            f"mean={df['latency_s'].mean():.2f}  "
+            f"median={df['latency_s'].median():.2f}  "
+            f"p95={df['latency_s'].quantile(0.95):.2f}  "
+            f"max={df['latency_s'].max():.2f}"
+        )
+
+        pct_formatters = {"sql_valid": "{:.0%}".format, "execution_correct": "{:.0%}".format}
+        latency_formatters = {"latency_s": "{:.2f}s".format}
 
         print("\nBy difficulty:")
         by_difficulty = df.groupby("difficulty").agg(
             n=("question", "count"),
             sql_valid=("sql_valid", "mean"),
             execution_correct=("execution_correct", "mean"),
+            latency_s=("latency_s", "mean"),
         )
-        print(by_difficulty.to_string(float_format=lambda v: f"{v:.0%}"))
+        print(by_difficulty.to_string(formatters={**pct_formatters, **latency_formatters}))
 
         print("\nBy category:")
         by_category = df.groupby("category").agg(
             n=("question", "count"),
             sql_valid=("sql_valid", "mean"),
             execution_correct=("execution_correct", "mean"),
+            latency_s=("latency_s", "mean"),
         )
-        print(by_category.to_string(float_format=lambda v: f"{v:.0%}"))
+        print(by_category.to_string(formatters={**pct_formatters, **latency_formatters}))
     print(f"\nResults written to : {RESULTS_PATH}")
     return df
 
