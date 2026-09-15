@@ -1,8 +1,8 @@
 # Database
 
 PostgreSQL database for the Movie Text-to-SQL agent. Small but relationally
-rich: ~50 movies distributed across normalized tables so the LLM has real
-relationships to reason over.
+rich: 50 real, well-known movies (1972–2023) distributed across normalized
+tables so the LLM has real relationships to reason over.
 
 ## Schema
 
@@ -32,8 +32,12 @@ genres    ──< movie_genres    >─────┘
 ## Files
 
 - `schema.sql` — table definitions, keys, and indexes. Idempotent.
-- `seed.sql` — **starter** sample data (7 movies) so the pipeline runs
-  end-to-end. Replace/extend with the curated ~50-movie dataset.
+- `seed.sql` — the curated 50-movie dataset (idempotent: `TRUNCATE ...
+  RESTART IDENTITY CASCADE` up front). Junction-table rows (`movie_directors`,
+  `movie_actors`, `movie_genres`) and `ratings` are inserted via name-based
+  `JOIN`s against `movies`/`directors`/`actors`/`genres` rather than
+  hardcoded ids, so editing or reordering the entity inserts can't silently
+  break a foreign key.
 - These two run automatically, in order, when the Postgres container boots
   for the first time (mounted into `/docker-entrypoint-initdb.d/`).
 
@@ -59,8 +63,11 @@ Wipe and start clean:
 docker compose down -v && docker compose up -d db
 ```
 
-## Target dataset size (from project doc)
+## Actual dataset size
 
-~50 movies · 20–30 directors · 80–120 actors · 10–15 genres ·
-50 rating records · plus junction rows. Exact numbers can be adjusted
-during data preparation.
+50 movies · 29 directors · 121 actors · 15 genres · 50 ratings (one per
+movie) · 52 movie–director links (2 movies are co-directed) · 146
+movie–actor links (2–3 main cast members per movie, with `role`) · 136
+movie–genre links (2–3 genres per movie). Matches the project doc's target
+of ~50 movies / 20–30 directors / 80–120 actors / 10–15 genres / ~50
+ratings, give or take a few actors for cast accuracy.

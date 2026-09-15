@@ -1,13 +1,14 @@
 -- ======================================================================
--- Movie Text-to-SQL — STARTER seed data (PostgreSQL)
+-- Movie Text-to-SQL — seed data (PostgreSQL)
 -- Loaded automatically by docker-compose on first boot (02_seed.sql).
 --
--- NOTE: This is a small illustrative sample so the pipeline is testable
--- end-to-end. Member 1 (Database & Data Engineering) replaces / extends
--- this with the curated ~50-movie dataset:
---   ~50 movies, 20-30 directors, 80-120 actors, 10-15 genres,
---   50 rating records, plus junction rows.
--- Data is fictional-but-realistic; adjust as needed.
+-- Curated dataset of 50 well-known real movies with accurate directors,
+-- main cast (with roles), genres, release year, runtime, language, and a
+-- plausible average critical rating. Internally consistent; safe to re-run.
+--
+-- Junction tables are populated via name-based JOINs (movie title / person
+-- name / genre name) rather than hardcoded SERIAL ids, so the inserts stay
+-- correct regardless of insertion order.
 -- ======================================================================
 
 -- Reset (safe to re-run). RESTART IDENTITY resets the SERIAL counters.
@@ -16,65 +17,412 @@ TRUNCATE movie_genres, movie_actors, movie_directors, ratings,
 
 -- ---------------------------------------------------------------- genres
 INSERT INTO genres (name) VALUES
-    ('Sci-Fi'), ('Drama'), ('Thriller'), ('Action'),
-    ('Animation'), ('Adventure'), ('Crime'), ('Fantasy');
+    ('Sci-Fi'), ('Drama'), ('Thriller'), ('Action'), ('Animation'),
+    ('Adventure'), ('Crime'), ('Fantasy'), ('Comedy'), ('Romance'),
+    ('Horror'), ('Mystery'), ('War'), ('Biography'), ('Musical');
 
 -- ------------------------------------------------------------- directors
 INSERT INTO directors (name) VALUES
-    ('Christopher Nolan'),   -- 1
-    ('Hayao Miyazaki'),      -- 2
-    ('Denis Villeneuve'),    -- 3
-    ('Bong Joon-ho'),        -- 4
-    ('Greta Gerwig');        -- 5
+    ('Frank Darabont'), ('Francis Ford Coppola'), ('Christopher Nolan'),
+    ('Quentin Tarantino'), ('Robert Zemeckis'), ('David Fincher'),
+    ('Lana Wachowski'), ('Lilly Wachowski'), ('Martin Scorsese'),
+    ('Bong Joon-ho'), ('Hayao Miyazaki'), ('Peter Jackson'),
+    ('Jonathan Demme'), ('Steven Spielberg'), ('Ridley Scott'),
+    ('Denis Villeneuve'), ('Joel Coen'), ('Ethan Coen'), ('Wes Anderson'),
+    ('Damien Chazelle'), ('Jordan Peele'), ('Park Chan-wook'),
+    ('Jean-Pierre Jeunet'), ('Fernando Meirelles'), ('John Lasseter'),
+    ('Pete Docter'), ('Andrew Stanton'), ('Greta Gerwig'), ('Todd Phillips');
 
 -- ---------------------------------------------------------------- actors
 INSERT INTO actors (name) VALUES
-    ('Leonardo DiCaprio'),   -- 1
-    ('Joseph Gordon-Levitt'),-- 2
-    ('Timothée Chalamet'),   -- 3
-    ('Zendaya'),             -- 4
-    ('Song Kang-ho'),        -- 5
-    ('Saoirse Ronan'),       -- 6
-    ('Cillian Murphy');      -- 7
+    ('Tim Robbins'), ('Morgan Freeman'), ('Bob Gunton'), ('Marlon Brando'),
+    ('Al Pacino'), ('James Caan'), ('Christian Bale'), ('Heath Ledger'),
+    ('Aaron Eckhart'), ('John Travolta'), ('Samuel L. Jackson'),
+    ('Uma Thurman'), ('Tom Hanks'), ('Robin Wright'), ('Gary Sinise'),
+    ('Leonardo DiCaprio'), ('Joseph Gordon-Levitt'), ('Elliot Page'),
+    ('Edward Norton'), ('Brad Pitt'), ('Helena Bonham Carter'),
+    ('Keanu Reeves'), ('Laurence Fishburne'), ('Carrie-Anne Moss'),
+    ('Ray Liotta'), ('Robert De Niro'), ('Joe Pesci'),
+    ('Matthew McConaughey'), ('Anne Hathaway'), ('Jessica Chastain'),
+    ('Song Kang-ho'), ('Choi Woo-shik'), ('Park So-dam'),
+    ('Rumi Hiiragi'), ('Miyu Irino'), ('Mari Natsuki'), ('Elijah Wood'),
+    ('Ian McKellen'), ('Viggo Mortensen'), ('Kevin Spacey'),
+    ('Jodie Foster'), ('Anthony Hopkins'), ('Scott Glenn'), ('Matt Damon'),
+    ('Tom Sizemore'), ('Liam Neeson'), ('Ben Kingsley'), ('Ralph Fiennes'),
+    ('Sam Neill'), ('Laura Dern'), ('Jeff Goldblum'), ('Russell Crowe'),
+    ('Joaquin Phoenix'), ('Connie Nielsen'), ('Ryan Gosling'),
+    ('Harrison Ford'), ('Ana de Armas'), ('Timothée Chalamet'), ('Zendaya'),
+    ('Rebecca Ferguson'), ('Amy Adams'), ('Jeremy Renner'),
+    ('Forest Whitaker'), ('Tommy Lee Jones'), ('Javier Bardem'),
+    ('Josh Brolin'), ('Tony Revolori'), ('Saoirse Ronan'), ('Miles Teller'),
+    ('J.K. Simmons'), ('Melissa Benoist'), ('Emma Stone'), ('John Legend'),
+    ('Daniel Kaluuya'), ('Allison Williams'), ('Catherine Keener'),
+    ('Choi Min-sik'), ('Yoo Ji-tae'), ('Kang Hye-jung'), ('Audrey Tautou'),
+    ('Mathieu Kassovitz'), ('Alexandre Rodrigues'), ('Leandro Firmino'),
+    ('Yōji Matsuda'), ('Yuriko Ishida'), ('Yūko Tanaka'), ('Noriko Hidaka'),
+    ('Chika Sakamoto'), ('Hitoshi Takagi'), ('Tim Allen'), ('Don Rickles'),
+    ('Ed Asner'), ('Christopher Plummer'), ('Ben Burtt'), ('Elissa Knight'),
+    ('Jeff Garlin'), ('Laurie Metcalf'), ('Emma Watson'), ('Florence Pugh'),
+    ('Margot Robbie'), ('America Ferrera'), ('Cillian Murphy'),
+    ('Emily Blunt'), ('John David Washington'), ('Robert Pattinson'),
+    ('Elizabeth Debicki'), ('Fionn Whitehead'), ('Tom Hardy'),
+    ('Mark Rylance'), ('Guy Pearce'), ('Joe Pantoliano'), ('Zazie Beetz'),
+    ('Jack Nicholson'), ('Jamie Foxx'), ('Christoph Waltz'), ('Lucy Liu'),
+    ('Vivica A. Fox'), ('David Carradine'), ('Michael Madsen'),
+    ('Christopher Walken'), ('Sharon Stone');
 
 -- ---------------------------------------------------------------- movies
 INSERT INTO movies (title, release_year, runtime, language) VALUES
-    ('Inception',        2010, 148, 'English'),  -- 1
-    ('Interstellar',     2014, 169, 'English'),  -- 2
-    ('Spirited Away',    2001, 125, 'Japanese'), -- 3
-    ('Dune',             2021, 155, 'English'),  -- 4
-    ('Parasite',         2019, 132, 'Korean'),   -- 5
-    ('Lady Bird',        2017,  94, 'English'),  -- 6
-    ('Oppenheimer',      2023, 180, 'English');  -- 7
+    ('The Shawshank Redemption', 1994, 142, 'English'),
+    ('The Godfather', 1972, 175, 'English'),
+    ('The Dark Knight', 2008, 152, 'English'),
+    ('Pulp Fiction', 1994, 154, 'English'),
+    ('Forrest Gump', 1994, 142, 'English'),
+    ('Inception', 2010, 148, 'English'),
+    ('Fight Club', 1999, 139, 'English'),
+    ('The Matrix', 1999, 136, 'English'),
+    ('Goodfellas', 1990, 145, 'English'),
+    ('Interstellar', 2014, 169, 'English'),
+    ('Parasite', 2019, 132, 'Korean'),
+    ('Spirited Away', 2001, 125, 'Japanese'),
+    ('The Lord of the Rings: The Fellowship of the Ring', 2001, 178, 'English'),
+    ('Se7en', 1995, 127, 'English'),
+    ('The Silence of the Lambs', 1991, 118, 'English'),
+    ('Saving Private Ryan', 1998, 169, 'English'),
+    ('Schindler''s List', 1993, 195, 'English'),
+    ('Jurassic Park', 1993, 127, 'English'),
+    ('Gladiator', 2000, 155, 'English'),
+    ('Blade Runner 2049', 2017, 164, 'English'),
+    ('Dune', 2021, 155, 'English'),
+    ('Arrival', 2016, 116, 'English'),
+    ('No Country for Old Men', 2007, 122, 'English'),
+    ('The Grand Budapest Hotel', 2014, 99, 'English'),
+    ('Whiplash', 2014, 106, 'English'),
+    ('La La Land', 2016, 128, 'English'),
+    ('Get Out', 2017, 104, 'English'),
+    ('Oldboy', 2003, 120, 'Korean'),
+    ('Amélie', 2001, 122, 'French'),
+    ('City of God', 2002, 130, 'Portuguese'),
+    ('Princess Mononoke', 1997, 134, 'Japanese'),
+    ('My Neighbor Totoro', 1988, 86, 'Japanese'),
+    ('Toy Story', 1995, 81, 'English'),
+    ('Up', 2009, 96, 'English'),
+    ('WALL-E', 2008, 98, 'English'),
+    ('Lady Bird', 2017, 94, 'English'),
+    ('Little Women', 2019, 135, 'English'),
+    ('Barbie', 2023, 114, 'English'),
+    ('Oppenheimer', 2023, 180, 'English'),
+    ('Tenet', 2020, 150, 'English'),
+    ('Dunkirk', 2017, 106, 'English'),
+    ('Memento', 2000, 113, 'English'),
+    ('Joker', 2019, 122, 'English'),
+    ('The Departed', 2006, 151, 'English'),
+    ('Taxi Driver', 1976, 114, 'English'),
+    ('Django Unchained', 2012, 165, 'English'),
+    ('Kill Bill: Vol. 1', 2003, 111, 'English'),
+    ('Kill Bill: Vol. 2', 2004, 137, 'English'),
+    ('Catch Me If You Can', 2002, 141, 'English'),
+    ('Casino', 1995, 178, 'English');
 
 -- --------------------------------------------------------------- ratings
-INSERT INTO ratings (movie_id, rating) VALUES
-    (1, 8.8), (2, 8.6), (3, 8.6), (4, 8.0), (5, 8.5), (6, 7.4), (7, 8.4);
+-- One critical-consensus-style rating per movie (~50 rows).
+INSERT INTO ratings (movie_id, rating)
+SELECT m.movie_id, x.rating
+FROM (VALUES
+    ('The Shawshank Redemption', 9.3), ('The Godfather', 9.2),
+    ('The Dark Knight', 9.0), ('Pulp Fiction', 8.9),
+    ('Forrest Gump', 8.8), ('Inception', 8.8), ('Fight Club', 8.8),
+    ('The Matrix', 8.7), ('Goodfellas', 8.7), ('Interstellar', 8.6),
+    ('Parasite', 8.5), ('Spirited Away', 8.6),
+    ('The Lord of the Rings: The Fellowship of the Ring', 8.8),
+    ('Se7en', 8.6), ('The Silence of the Lambs', 8.6),
+    ('Saving Private Ryan', 8.6), ('Schindler''s List', 9.0),
+    ('Jurassic Park', 8.2), ('Gladiator', 8.5),
+    ('Blade Runner 2049', 8.0), ('Dune', 8.0), ('Arrival', 7.9),
+    ('No Country for Old Men', 8.2), ('The Grand Budapest Hotel', 8.1),
+    ('Whiplash', 8.5), ('La La Land', 8.0), ('Get Out', 7.7),
+    ('Oldboy', 8.4), ('Amélie', 8.3), ('City of God', 8.6),
+    ('Princess Mononoke', 8.4), ('My Neighbor Totoro', 8.1),
+    ('Toy Story', 8.3), ('Up', 8.3), ('WALL-E', 8.4),
+    ('Lady Bird', 7.4), ('Little Women', 7.8), ('Barbie', 6.9),
+    ('Oppenheimer', 8.4), ('Tenet', 7.3), ('Dunkirk', 7.8),
+    ('Memento', 8.4), ('Joker', 8.4), ('The Departed', 8.5),
+    ('Taxi Driver', 8.2), ('Django Unchained', 8.4),
+    ('Kill Bill: Vol. 1', 8.2), ('Kill Bill: Vol. 2', 8.0),
+    ('Catch Me If You Can', 8.0), ('Casino', 8.2)
+) AS x(movie_title, rating)
+JOIN movies m ON m.title = x.movie_title;
 
 -- ------------------------------------------------------- movie_directors
-INSERT INTO movie_directors (movie_id, director_id) VALUES
-    (1, 1), (2, 1), (7, 1),   -- Nolan: Inception, Interstellar, Oppenheimer
-    (3, 2),                    -- Miyazaki: Spirited Away
-    (4, 3),                    -- Villeneuve: Dune
-    (5, 4),                    -- Bong Joon-ho: Parasite
-    (6, 5);                    -- Gerwig: Lady Bird
+INSERT INTO movie_directors (movie_id, director_id)
+SELECT m.movie_id, d.director_id
+FROM (VALUES
+    ('The Shawshank Redemption', 'Frank Darabont'),
+    ('The Godfather', 'Francis Ford Coppola'),
+    ('The Dark Knight', 'Christopher Nolan'),
+    ('Pulp Fiction', 'Quentin Tarantino'),
+    ('Forrest Gump', 'Robert Zemeckis'),
+    ('Inception', 'Christopher Nolan'),
+    ('Fight Club', 'David Fincher'),
+    ('The Matrix', 'Lana Wachowski'),
+    ('The Matrix', 'Lilly Wachowski'),
+    ('Goodfellas', 'Martin Scorsese'),
+    ('Interstellar', 'Christopher Nolan'),
+    ('Parasite', 'Bong Joon-ho'),
+    ('Spirited Away', 'Hayao Miyazaki'),
+    ('The Lord of the Rings: The Fellowship of the Ring', 'Peter Jackson'),
+    ('Se7en', 'David Fincher'),
+    ('The Silence of the Lambs', 'Jonathan Demme'),
+    ('Saving Private Ryan', 'Steven Spielberg'),
+    ('Schindler''s List', 'Steven Spielberg'),
+    ('Jurassic Park', 'Steven Spielberg'),
+    ('Gladiator', 'Ridley Scott'),
+    ('Blade Runner 2049', 'Denis Villeneuve'),
+    ('Dune', 'Denis Villeneuve'),
+    ('Arrival', 'Denis Villeneuve'),
+    ('No Country for Old Men', 'Joel Coen'),
+    ('No Country for Old Men', 'Ethan Coen'),
+    ('The Grand Budapest Hotel', 'Wes Anderson'),
+    ('Whiplash', 'Damien Chazelle'),
+    ('La La Land', 'Damien Chazelle'),
+    ('Get Out', 'Jordan Peele'),
+    ('Oldboy', 'Park Chan-wook'),
+    ('Amélie', 'Jean-Pierre Jeunet'),
+    ('City of God', 'Fernando Meirelles'),
+    ('Princess Mononoke', 'Hayao Miyazaki'),
+    ('My Neighbor Totoro', 'Hayao Miyazaki'),
+    ('Toy Story', 'John Lasseter'),
+    ('Up', 'Pete Docter'),
+    ('WALL-E', 'Andrew Stanton'),
+    ('Lady Bird', 'Greta Gerwig'),
+    ('Little Women', 'Greta Gerwig'),
+    ('Barbie', 'Greta Gerwig'),
+    ('Oppenheimer', 'Christopher Nolan'),
+    ('Tenet', 'Christopher Nolan'),
+    ('Dunkirk', 'Christopher Nolan'),
+    ('Memento', 'Christopher Nolan'),
+    ('Joker', 'Todd Phillips'),
+    ('The Departed', 'Martin Scorsese'),
+    ('Taxi Driver', 'Martin Scorsese'),
+    ('Django Unchained', 'Quentin Tarantino'),
+    ('Kill Bill: Vol. 1', 'Quentin Tarantino'),
+    ('Kill Bill: Vol. 2', 'Quentin Tarantino'),
+    ('Catch Me If You Can', 'Steven Spielberg'),
+    ('Casino', 'Martin Scorsese')
+) AS x(movie_title, director_name)
+JOIN movies m ON m.title = x.movie_title
+JOIN directors d ON d.name = x.director_name;
 
 -- ---------------------------------------------------------- movie_actors
-INSERT INTO movie_actors (movie_id, actor_id, role) VALUES
-    (1, 1, 'Dom Cobb'),
-    (1, 2, 'Arthur'),
-    (4, 3, 'Paul Atreides'),
-    (4, 4, 'Chani'),
-    (5, 5, 'Kim Ki-taek'),
-    (6, 6, 'Christine "Lady Bird" McPherson'),
-    (7, 7, 'J. Robert Oppenheimer');
+INSERT INTO movie_actors (movie_id, actor_id, role)
+SELECT m.movie_id, a.actor_id, x.role
+FROM (VALUES
+    ('The Shawshank Redemption', 'Tim Robbins', 'Andy Dufresne'),
+    ('The Shawshank Redemption', 'Morgan Freeman', 'Ellis Boyd ''Red'' Redding'),
+    ('The Shawshank Redemption', 'Bob Gunton', 'Warden Norton'),
+    ('The Godfather', 'Marlon Brando', 'Vito Corleone'),
+    ('The Godfather', 'Al Pacino', 'Michael Corleone'),
+    ('The Godfather', 'James Caan', 'Sonny Corleone'),
+    ('The Dark Knight', 'Christian Bale', 'Bruce Wayne / Batman'),
+    ('The Dark Knight', 'Heath Ledger', 'Joker'),
+    ('The Dark Knight', 'Aaron Eckhart', 'Harvey Dent'),
+    ('Pulp Fiction', 'John Travolta', 'Vincent Vega'),
+    ('Pulp Fiction', 'Samuel L. Jackson', 'Jules Winnfield'),
+    ('Pulp Fiction', 'Uma Thurman', 'Mia Wallace'),
+    ('Forrest Gump', 'Tom Hanks', 'Forrest Gump'),
+    ('Forrest Gump', 'Robin Wright', 'Jenny Curran'),
+    ('Forrest Gump', 'Gary Sinise', 'Lieutenant Dan'),
+    ('Inception', 'Leonardo DiCaprio', 'Dom Cobb'),
+    ('Inception', 'Joseph Gordon-Levitt', 'Arthur'),
+    ('Inception', 'Elliot Page', 'Ariadne'),
+    ('Fight Club', 'Edward Norton', 'The Narrator'),
+    ('Fight Club', 'Brad Pitt', 'Tyler Durden'),
+    ('Fight Club', 'Helena Bonham Carter', 'Marla Singer'),
+    ('The Matrix', 'Keanu Reeves', 'Neo'),
+    ('The Matrix', 'Laurence Fishburne', 'Morpheus'),
+    ('The Matrix', 'Carrie-Anne Moss', 'Trinity'),
+    ('Goodfellas', 'Ray Liotta', 'Henry Hill'),
+    ('Goodfellas', 'Robert De Niro', 'Jimmy Conway'),
+    ('Goodfellas', 'Joe Pesci', 'Tommy DeVito'),
+    ('Interstellar', 'Matthew McConaughey', 'Cooper'),
+    ('Interstellar', 'Anne Hathaway', 'Brand'),
+    ('Interstellar', 'Jessica Chastain', 'Murph'),
+    ('Parasite', 'Song Kang-ho', 'Kim Ki-taek'),
+    ('Parasite', 'Choi Woo-shik', 'Kim Ki-woo'),
+    ('Parasite', 'Park So-dam', 'Kim Ki-jung'),
+    ('Spirited Away', 'Rumi Hiiragi', 'Chihiro'),
+    ('Spirited Away', 'Miyu Irino', 'Haku'),
+    ('Spirited Away', 'Mari Natsuki', 'Yubaba'),
+    ('The Lord of the Rings: The Fellowship of the Ring', 'Elijah Wood', 'Frodo Baggins'),
+    ('The Lord of the Rings: The Fellowship of the Ring', 'Ian McKellen', 'Gandalf'),
+    ('The Lord of the Rings: The Fellowship of the Ring', 'Viggo Mortensen', 'Aragorn'),
+    ('Se7en', 'Brad Pitt', 'Detective Mills'),
+    ('Se7en', 'Morgan Freeman', 'Detective Somerset'),
+    ('Se7en', 'Kevin Spacey', 'John Doe'),
+    ('The Silence of the Lambs', 'Jodie Foster', 'Clarice Starling'),
+    ('The Silence of the Lambs', 'Anthony Hopkins', 'Hannibal Lecter'),
+    ('The Silence of the Lambs', 'Scott Glenn', 'Jack Crawford'),
+    ('Saving Private Ryan', 'Tom Hanks', 'Captain Miller'),
+    ('Saving Private Ryan', 'Matt Damon', 'Private Ryan'),
+    ('Saving Private Ryan', 'Tom Sizemore', 'Sergeant Horvath'),
+    ('Schindler''s List', 'Liam Neeson', 'Oskar Schindler'),
+    ('Schindler''s List', 'Ben Kingsley', 'Itzhak Stern'),
+    ('Schindler''s List', 'Ralph Fiennes', 'Amon Göth'),
+    ('Jurassic Park', 'Sam Neill', 'Dr. Alan Grant'),
+    ('Jurassic Park', 'Laura Dern', 'Dr. Ellie Sattler'),
+    ('Jurassic Park', 'Jeff Goldblum', 'Dr. Ian Malcolm'),
+    ('Gladiator', 'Russell Crowe', 'Maximus'),
+    ('Gladiator', 'Joaquin Phoenix', 'Commodus'),
+    ('Gladiator', 'Connie Nielsen', 'Lucilla'),
+    ('Blade Runner 2049', 'Ryan Gosling', 'K'),
+    ('Blade Runner 2049', 'Harrison Ford', 'Rick Deckard'),
+    ('Blade Runner 2049', 'Ana de Armas', 'Joi'),
+    ('Dune', 'Timothée Chalamet', 'Paul Atreides'),
+    ('Dune', 'Zendaya', 'Chani'),
+    ('Dune', 'Rebecca Ferguson', 'Lady Jessica'),
+    ('Arrival', 'Amy Adams', 'Louise Banks'),
+    ('Arrival', 'Jeremy Renner', 'Ian Donnelly'),
+    ('Arrival', 'Forest Whitaker', 'Colonel Weber'),
+    ('No Country for Old Men', 'Tommy Lee Jones', 'Ed Tom Bell'),
+    ('No Country for Old Men', 'Javier Bardem', 'Anton Chigurh'),
+    ('No Country for Old Men', 'Josh Brolin', 'Llewelyn Moss'),
+    ('The Grand Budapest Hotel', 'Ralph Fiennes', 'M. Gustave'),
+    ('The Grand Budapest Hotel', 'Tony Revolori', 'Zero Moustafa'),
+    ('The Grand Budapest Hotel', 'Saoirse Ronan', 'Agatha'),
+    ('Whiplash', 'Miles Teller', 'Andrew Neiman'),
+    ('Whiplash', 'J.K. Simmons', 'Terence Fletcher'),
+    ('Whiplash', 'Melissa Benoist', 'Nicole'),
+    ('La La Land', 'Ryan Gosling', 'Sebastian'),
+    ('La La Land', 'Emma Stone', 'Mia'),
+    ('La La Land', 'John Legend', 'Keith'),
+    ('Get Out', 'Daniel Kaluuya', 'Chris Washington'),
+    ('Get Out', 'Allison Williams', 'Rose Armitage'),
+    ('Get Out', 'Catherine Keener', 'Missy Armitage'),
+    ('Oldboy', 'Choi Min-sik', 'Oh Dae-su'),
+    ('Oldboy', 'Yoo Ji-tae', 'Lee Woo-jin'),
+    ('Oldboy', 'Kang Hye-jung', 'Mi-do'),
+    ('Amélie', 'Audrey Tautou', 'Amélie Poulain'),
+    ('Amélie', 'Mathieu Kassovitz', 'Nino Quincampoix'),
+    ('City of God', 'Alexandre Rodrigues', 'Rocket'),
+    ('City of God', 'Leandro Firmino', 'Li''l Zé'),
+    ('Princess Mononoke', 'Yōji Matsuda', 'Ashitaka'),
+    ('Princess Mononoke', 'Yuriko Ishida', 'San'),
+    ('Princess Mononoke', 'Yūko Tanaka', 'Lady Eboshi'),
+    ('My Neighbor Totoro', 'Noriko Hidaka', 'Satsuki'),
+    ('My Neighbor Totoro', 'Chika Sakamoto', 'Mei'),
+    ('My Neighbor Totoro', 'Hitoshi Takagi', 'Totoro'),
+    ('Toy Story', 'Tom Hanks', 'Woody (voice)'),
+    ('Toy Story', 'Tim Allen', 'Buzz Lightyear (voice)'),
+    ('Toy Story', 'Don Rickles', 'Mr. Potato Head (voice)'),
+    ('Up', 'Ed Asner', 'Carl Fredricksen (voice)'),
+    ('Up', 'Christopher Plummer', 'Charles Muntz (voice)'),
+    ('WALL-E', 'Ben Burtt', 'WALL-E (voice)'),
+    ('WALL-E', 'Elissa Knight', 'EVE (voice)'),
+    ('WALL-E', 'Jeff Garlin', 'Captain McCrea (voice)'),
+    ('Lady Bird', 'Saoirse Ronan', 'Christine ''Lady Bird'' McPherson'),
+    ('Lady Bird', 'Laurie Metcalf', 'Marion McPherson'),
+    ('Lady Bird', 'Timothée Chalamet', 'Kyle'),
+    ('Little Women', 'Saoirse Ronan', 'Jo March'),
+    ('Little Women', 'Emma Watson', 'Meg March'),
+    ('Little Women', 'Florence Pugh', 'Amy March'),
+    ('Barbie', 'Margot Robbie', 'Barbie'),
+    ('Barbie', 'Ryan Gosling', 'Ken'),
+    ('Barbie', 'America Ferrera', 'Gloria'),
+    ('Oppenheimer', 'Cillian Murphy', 'J. Robert Oppenheimer'),
+    ('Oppenheimer', 'Emily Blunt', 'Kitty Oppenheimer'),
+    ('Oppenheimer', 'Matt Damon', 'Leslie Groves'),
+    ('Tenet', 'John David Washington', 'The Protagonist'),
+    ('Tenet', 'Robert Pattinson', 'Neil'),
+    ('Tenet', 'Elizabeth Debicki', 'Kat'),
+    ('Dunkirk', 'Fionn Whitehead', 'Tommy'),
+    ('Dunkirk', 'Tom Hardy', 'Farrier'),
+    ('Dunkirk', 'Mark Rylance', 'Mr. Dawson'),
+    ('Memento', 'Guy Pearce', 'Leonard Shelby'),
+    ('Memento', 'Carrie-Anne Moss', 'Natalie'),
+    ('Memento', 'Joe Pantoliano', 'Teddy'),
+    ('Joker', 'Joaquin Phoenix', 'Arthur Fleck'),
+    ('Joker', 'Robert De Niro', 'Murray Franklin'),
+    ('Joker', 'Zazie Beetz', 'Sophie Dumond'),
+    ('The Departed', 'Leonardo DiCaprio', 'Billy Costigan'),
+    ('The Departed', 'Matt Damon', 'Colin Sullivan'),
+    ('The Departed', 'Jack Nicholson', 'Frank Costello'),
+    ('Taxi Driver', 'Robert De Niro', 'Travis Bickle'),
+    ('Taxi Driver', 'Jodie Foster', 'Iris'),
+    ('Django Unchained', 'Jamie Foxx', 'Django'),
+    ('Django Unchained', 'Christoph Waltz', 'Dr. King Schultz'),
+    ('Django Unchained', 'Leonardo DiCaprio', 'Calvin Candie'),
+    ('Kill Bill: Vol. 1', 'Uma Thurman', 'The Bride'),
+    ('Kill Bill: Vol. 1', 'Lucy Liu', 'O-Ren Ishii'),
+    ('Kill Bill: Vol. 1', 'Vivica A. Fox', 'Vernita Green'),
+    ('Kill Bill: Vol. 2', 'Uma Thurman', 'The Bride'),
+    ('Kill Bill: Vol. 2', 'David Carradine', 'Bill'),
+    ('Kill Bill: Vol. 2', 'Michael Madsen', 'Budd'),
+    ('Catch Me If You Can', 'Leonardo DiCaprio', 'Frank Abagnale Jr.'),
+    ('Catch Me If You Can', 'Tom Hanks', 'Carl Hanratty'),
+    ('Catch Me If You Can', 'Christopher Walken', 'Frank Abagnale Sr.'),
+    ('Casino', 'Robert De Niro', 'Sam ''Ace'' Rothstein'),
+    ('Casino', 'Joe Pesci', 'Nicky Santoro'),
+    ('Casino', 'Sharon Stone', 'Ginger McKenna')
+) AS x(movie_title, actor_name, role)
+JOIN movies m ON m.title = x.movie_title
+JOIN actors a ON a.name = x.actor_name;
 
 -- ---------------------------------------------------------- movie_genres
-INSERT INTO movie_genres (movie_id, genre_id) VALUES
-    (1, 1), (1, 3),   -- Inception: Sci-Fi, Thriller
-    (2, 1), (2, 2),   -- Interstellar: Sci-Fi, Drama
-    (3, 5), (3, 6),   -- Spirited Away: Animation, Adventure
-    (4, 1), (4, 6),   -- Dune: Sci-Fi, Adventure
-    (5, 2), (5, 3),   -- Parasite: Drama, Thriller
-    (6, 2),           -- Lady Bird: Drama
-    (7, 2);           -- Oppenheimer: Drama
+INSERT INTO movie_genres (movie_id, genre_id)
+SELECT m.movie_id, g.genre_id
+FROM (VALUES
+    ('The Shawshank Redemption', 'Drama'), ('The Shawshank Redemption', 'Crime'),
+    ('The Godfather', 'Crime'), ('The Godfather', 'Drama'),
+    ('The Dark Knight', 'Action'), ('The Dark Knight', 'Crime'), ('The Dark Knight', 'Thriller'),
+    ('Pulp Fiction', 'Crime'), ('Pulp Fiction', 'Drama'),
+    ('Forrest Gump', 'Drama'), ('Forrest Gump', 'Romance'),
+    ('Inception', 'Sci-Fi'), ('Inception', 'Thriller'), ('Inception', 'Action'),
+    ('Fight Club', 'Drama'), ('Fight Club', 'Thriller'),
+    ('The Matrix', 'Sci-Fi'), ('The Matrix', 'Action'),
+    ('Goodfellas', 'Crime'), ('Goodfellas', 'Drama'), ('Goodfellas', 'Biography'),
+    ('Interstellar', 'Sci-Fi'), ('Interstellar', 'Drama'), ('Interstellar', 'Adventure'),
+    ('Parasite', 'Drama'), ('Parasite', 'Thriller'), ('Parasite', 'Comedy'),
+    ('Spirited Away', 'Animation'), ('Spirited Away', 'Adventure'), ('Spirited Away', 'Fantasy'),
+    ('The Lord of the Rings: The Fellowship of the Ring', 'Adventure'),
+    ('The Lord of the Rings: The Fellowship of the Ring', 'Fantasy'),
+    ('The Lord of the Rings: The Fellowship of the Ring', 'Action'),
+    ('Se7en', 'Crime'), ('Se7en', 'Thriller'), ('Se7en', 'Mystery'),
+    ('The Silence of the Lambs', 'Thriller'), ('The Silence of the Lambs', 'Crime'), ('The Silence of the Lambs', 'Horror'),
+    ('Saving Private Ryan', 'War'), ('Saving Private Ryan', 'Drama'), ('Saving Private Ryan', 'Action'),
+    ('Schindler''s List', 'Biography'), ('Schindler''s List', 'Drama'), ('Schindler''s List', 'War'),
+    ('Jurassic Park', 'Sci-Fi'), ('Jurassic Park', 'Adventure'), ('Jurassic Park', 'Action'),
+    ('Gladiator', 'Action'), ('Gladiator', 'Drama'), ('Gladiator', 'Adventure'),
+    ('Blade Runner 2049', 'Sci-Fi'), ('Blade Runner 2049', 'Thriller'), ('Blade Runner 2049', 'Mystery'),
+    ('Dune', 'Sci-Fi'), ('Dune', 'Adventure'),
+    ('Arrival', 'Sci-Fi'), ('Arrival', 'Drama'), ('Arrival', 'Mystery'),
+    ('No Country for Old Men', 'Crime'), ('No Country for Old Men', 'Thriller'), ('No Country for Old Men', 'Drama'),
+    ('The Grand Budapest Hotel', 'Comedy'), ('The Grand Budapest Hotel', 'Adventure'), ('The Grand Budapest Hotel', 'Drama'),
+    ('Whiplash', 'Drama'), ('Whiplash', 'Musical'),
+    ('La La Land', 'Musical'), ('La La Land', 'Romance'), ('La La Land', 'Drama'),
+    ('Get Out', 'Horror'), ('Get Out', 'Thriller'), ('Get Out', 'Mystery'),
+    ('Oldboy', 'Thriller'), ('Oldboy', 'Mystery'), ('Oldboy', 'Action'),
+    ('Amélie', 'Comedy'), ('Amélie', 'Romance'),
+    ('City of God', 'Crime'), ('City of God', 'Drama'),
+    ('Princess Mononoke', 'Animation'), ('Princess Mononoke', 'Adventure'), ('Princess Mononoke', 'Fantasy'),
+    ('My Neighbor Totoro', 'Animation'), ('My Neighbor Totoro', 'Fantasy'),
+    ('Toy Story', 'Animation'), ('Toy Story', 'Adventure'), ('Toy Story', 'Comedy'),
+    ('Up', 'Animation'), ('Up', 'Adventure'), ('Up', 'Comedy'),
+    ('WALL-E', 'Animation'), ('WALL-E', 'Sci-Fi'), ('WALL-E', 'Adventure'),
+    ('Lady Bird', 'Drama'), ('Lady Bird', 'Comedy'),
+    ('Little Women', 'Drama'), ('Little Women', 'Romance'),
+    ('Barbie', 'Comedy'), ('Barbie', 'Fantasy'), ('Barbie', 'Adventure'),
+    ('Oppenheimer', 'Biography'), ('Oppenheimer', 'Drama'), ('Oppenheimer', 'Thriller'),
+    ('Tenet', 'Sci-Fi'), ('Tenet', 'Action'), ('Tenet', 'Thriller'),
+    ('Dunkirk', 'War'), ('Dunkirk', 'Action'), ('Dunkirk', 'Drama'),
+    ('Memento', 'Thriller'), ('Memento', 'Mystery'), ('Memento', 'Crime'),
+    ('Joker', 'Drama'), ('Joker', 'Thriller'), ('Joker', 'Crime'),
+    ('The Departed', 'Crime'), ('The Departed', 'Drama'), ('The Departed', 'Thriller'),
+    ('Taxi Driver', 'Drama'), ('Taxi Driver', 'Crime'), ('Taxi Driver', 'Thriller'),
+    ('Django Unchained', 'Action'), ('Django Unchained', 'Drama'), ('Django Unchained', 'Adventure'),
+    ('Kill Bill: Vol. 1', 'Action'), ('Kill Bill: Vol. 1', 'Crime'), ('Kill Bill: Vol. 1', 'Thriller'),
+    ('Kill Bill: Vol. 2', 'Action'), ('Kill Bill: Vol. 2', 'Crime'), ('Kill Bill: Vol. 2', 'Drama'),
+    ('Catch Me If You Can', 'Crime'), ('Catch Me If You Can', 'Drama'), ('Catch Me If You Can', 'Biography'),
+    ('Casino', 'Crime'), ('Casino', 'Drama')
+) AS x(movie_title, genre_name)
+JOIN movies m ON m.title = x.movie_title
+JOIN genres g ON g.name = x.genre_name;
