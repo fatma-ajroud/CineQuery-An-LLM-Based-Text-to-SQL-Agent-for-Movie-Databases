@@ -1,46 +1,120 @@
-"""Streamlit UI for the Movie Text-to-SQL agent.
-
-Chat-style input; shows the user question, generated SQL, execution result,
-and the final natural-language answer (section 10, Member 4).
-
-Run:  streamlit run app/streamlit_app.py
 """
-from __future__ import annotations
+Streamlit front-end for the Text-to-SQL Movie Database agent.
+
+Run with:
+    streamlit run app/streamlit_app.py
+
+For each question the UI shows, in order:
+    1. the user's natural-language question
+    2. the SQL generated (and executed) by the agent
+    3. the raw execution result (as a table)
+    4. the final natural-language answer
+
+The UI is decoupled from the agent implementation via `agent.graph.run_agent`,
+so it works today against the placeholder mock agent and will work unchanged
+once Member 2/3 wire in the real LangChain + LangGraph pipeline.
+"""
 
 import sys
 from pathlib import Path
 
-# Allow `streamlit run app/streamlit_app.py` to import project packages.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 import pandas as pd
 import streamlit as st
 
-from agent.graph import answer_question
+# Make the project root importable when Streamlit runs this file directly.
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-st.set_page_config(page_title="Movie Text-to-SQL", page_icon="🎬")
-st.title("🎬 Movie Text-to-SQL Agent")
-st.caption("Ask a question about the movie database in plain language.")
+from agent.graph import _credentials_available, run_agent  # noqa: E402
 
-question = st.text_input(
-    "Your question",
-    placeholder="e.g. Which directors have the highest average movie rating?",
+st.set_page_config(
+    page_title="Movie DB — Ask in Plain English",
+    page_icon="🎬",
+    layout="centered",
 )
 
-if st.button("Ask", type="primary") and question.strip():
-    with st.spinner("Thinking..."):
-        state = answer_question(question.strip())
+EXAMPLE_QUESTIONS = [
+    "How many movies are in the database?",
+    "Which directors have the highest average movie rating?",
+    "Which actors appeared in Inception?",
+    "Which genres have an average rating above 8?",
+]
 
-    st.subheader("Answer")
-    st.write(state.get("final_answer", ""))
+if "history" not in st.session_state:
+    st.session_state.history = []  # list of dicts: question/sql/columns/rows/answer/error
 
-    with st.expander("Generated SQL"):
-        st.code(state.get("generated_sql", ""), language="sql")
 
-    rows = state.get("query_result")
-    if rows:
-        st.subheader("Result")
-        st.dataframe(pd.DataFrame(rows), use_container_width=True)
+def render_turn(turn: dict) -> None:
+    with st.chat_message("user"):
+        st.markdown(turn["question"])
 
-    if state.get("retry_count"):
-        st.info(f"SQL was repaired {state['retry_count']} time(s) before success.")
+    with st.chat_message("assistant"):
+        if turn.get("error"):
+            st.error(f"The query failed after {turn['attempts']} attempt(s): {turn['error']}")
+            return
+
+        st.markdown(turn["answer"])
+
+        with st.expander(f"Generated SQL ({turn['attempts']} attempt(s))", expanded=False):
+            st.code(turn["sql"], language="sql")
+
+        if turn["rows"]:
+            df = pd.DataFrame(turn["rows"], columns=turn["columns"])
+            st.dataframe(df, use_container_width=True, hide_index=True)
+
+
+def ask(question: str) -> None:
+    with st.spinner("Thinking through the schema and generating SQL..."):
+        result = run_agent(question)
+
+    st.session_state.history.append(
+        {
+            "question": question,
+            "sql": result["sql"],
+            "columns": result["columns"],
+            "rows": result["rows"],
+            "answer": result["answer"],
+            "attempts": result["attempts"],
+            "error": result["error"],
+        }
+    )
+
+
+# --- Sidebar -----------------------------------------------------------
+with st.sidebar:
+    st.header("🎬 Movie Text-to-SQL")
+    st.caption(
+        "Ask questions in plain English. The agent generates SQL, "
+        "runs it against PostgreSQL, and explains the result."
+    )
+
+    st.subheader("Try an example")
+    for example in EXAMPLE_QUESTIONS:
+        if st.button(example, use_container_width=True, key=f"ex_{example}"):
+            ask(example)
+
+    st.divider()
+    if st.button("Clear conversation", use_container_width=True):
+        st.session_state.history = []
+        st.rerun()
+
+    st.divider()
+    if _credentials_available():
+        st.success("Real agent active — LangGraph + Postgres", icon="✅")
+    else:
+        st.warning(
+            "Running on the mock agent (no OPENROUTER_API_KEY / "
+            "DATABASE_URL detected). See README.md to switch on "
+            "the real LangGraph pipeline.",
+            icon="⚠️",
+        )
+
+# --- Main chat area ------------------------------------------------------
+st.title("Ask your movie database anything")
+
+for turn in st.session_state.history:
+    render_turn(turn)
+
+question = st.chat_input("e.g. Which director has directed more than three movies?")
+if question:
+    ask(question)
+    st.rerun()

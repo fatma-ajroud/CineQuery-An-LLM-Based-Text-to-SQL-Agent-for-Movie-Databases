@@ -10,6 +10,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from llm.model import get_llm
 from llm.prompts import (
     ANSWER_PROMPT,
+    FEW_SHOT_EXAMPLES,
     RELATIONSHIPS,
     SQL_GENERATION_PROMPT,
     SQL_REPAIR_PROMPT,
@@ -29,10 +30,7 @@ def _clean_sql(text: str) -> str:
 
 
 def generate_sql(question: str, schema: str) -> str:
-    """Generate an initial SQL query from a question + schema.
-
-    TODO(Member 2): tune the prompt, optionally add few-shot examples.
-    """
+    """Generate an initial SQL query from a question + schema."""
     llm = get_llm()
     messages = [
         SystemMessage(content=SQL_SYSTEM_PROMPT),
@@ -40,6 +38,7 @@ def generate_sql(question: str, schema: str) -> str:
             content=SQL_GENERATION_PROMPT.format(
                 schema=schema,
                 relationships=RELATIONSHIPS,
+                examples=FEW_SHOT_EXAMPLES,
                 question=question,
             )
         ),

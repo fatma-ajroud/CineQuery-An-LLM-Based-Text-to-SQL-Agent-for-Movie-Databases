@@ -21,6 +21,22 @@ Rules:
   appropriately.
 """
 
+# Few-shot examples spanning the four evaluation difficulty levels, so the
+# model sees the exact table/column names and join style expected of it.
+FEW_SHOT_EXAMPLES = """\
+Question: How many movies are in the database?
+SQL: SELECT COUNT(*) FROM movies;
+
+Question: Which movies did Christopher Nolan direct?
+SQL: SELECT m.title FROM movies m JOIN movie_directors md ON m.movie_id = md.movie_id JOIN directors d ON md.director_id = d.director_id WHERE d.name = 'Christopher Nolan';
+
+Question: What is the average rating for each genre?
+SQL: SELECT g.name, AVG(r.rating) AS avg_rating FROM genres g JOIN movie_genres mg ON g.genre_id = mg.genre_id JOIN ratings r ON mg.movie_id = r.movie_id GROUP BY g.name ORDER BY avg_rating DESC;
+
+Question: Which directors have directed more than three movies?
+SQL: SELECT d.name, COUNT(*) AS movie_count FROM directors d JOIN movie_directors md ON d.director_id = md.director_id GROUP BY d.name HAVING COUNT(*) > 3 ORDER BY movie_count DESC;
+"""
+
 # Human prompt for the initial generation. Filled with schema + question.
 SQL_GENERATION_PROMPT = """\
 Database schema:
@@ -28,6 +44,9 @@ Database schema:
 
 Relationships:
 {relationships}
+
+Examples:
+{examples}
 
 User question:
 {question}

@@ -102,6 +102,50 @@ def answer_question(question: str) -> AgentState:
     return graph_app.invoke(new_state(question))
 
 
+def _credentials_available() -> bool:
+    """Whether OpenRouter + Postgres config look present.
+
+    Informational only (drives the Streamlit sidebar badge) - it does not
+    gate `run_agent`, which always calls the real graph.
+    """
+    return bool(settings.OPENROUTER_API_KEY) and bool(settings.DATABASE_URL)
+
+
+def run_agent(question: str) -> dict:
+    """UI-facing wrapper around `answer_question`.
+
+    Shapes the final state into the flat dict app/streamlit_app.py renders
+    per turn, and never raises - any exception (e.g. a missing API key or an
+    unreachable database) is captured into `error` instead of crashing the
+    app.
+    """
+    try:
+        state = answer_question(question)
+    except Exception as exc:  # noqa: BLE001 - surfaced to the UI, not raised
+        return {
+            "sql": "",
+            "columns": [],
+            "rows": [],
+            "answer": "",
+            "attempts": 0,
+            "error": str(exc),
+        }
+
+    rows = state.get("query_result") or []
+    error = None
+    if state.get("query_result") is None:
+        error = state.get("database_error") or state.get("validation_error")
+
+    return {
+        "sql": state.get("generated_sql", ""),
+        "columns": list(rows[0].keys()) if rows else [],
+        "rows": rows,
+        "answer": state.get("final_answer", ""),
+        "attempts": state.get("retry_count", 0),
+        "error": error,
+    }
+
+
 if __name__ == "__main__":  # quick manual smoke test
     import sys
 
