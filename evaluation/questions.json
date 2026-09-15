@@ -4,34 +4,265 @@
     "difficulty": "easy",
     "category": "basic",
     "expected_sql": "SELECT COUNT(*) FROM movies;",
-    "expected_result": "7"
+    "expected_result": "50"
   },
   {
-    "question": "What movies were released after 2015?",
+    "question": "How many directors are in the database?",
     "difficulty": "easy",
     "category": "basic",
-    "expected_sql": "SELECT title FROM movies WHERE release_year > 2015;",
-    "expected_result": "Dune, Parasite, Lady Bird, Oppenheimer"
+    "expected_sql": "SELECT COUNT(*) FROM directors;",
+    "expected_result": "29"
   },
   {
-    "question": "Which movies were directed by Christopher Nolan?",
+    "question": "How many genres are in the database?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT COUNT(*) FROM genres;",
+    "expected_result": "15"
+  },
+  {
+    "question": "What movies were released in 1994?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT title FROM movies WHERE release_year = 1994;",
+    "expected_result": "The Shawshank Redemption, Pulp Fiction, Forrest Gump"
+  },
+  {
+    "question": "Which movie has the longest runtime?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT title FROM movies ORDER BY runtime DESC LIMIT 1;",
+    "expected_result": "Schindler's List"
+  },
+  {
+    "question": "Which movie has the shortest runtime?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT title FROM movies ORDER BY runtime ASC LIMIT 1;",
+    "expected_result": "Toy Story"
+  },
+  {
+    "question": "Which movies are in Japanese?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT title FROM movies WHERE language = 'Japanese';",
+    "expected_result": "Spirited Away, Princess Mononoke, My Neighbor Totoro"
+  },
+  {
+    "question": "Which movies were released before 1980?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT title FROM movies WHERE release_year < 1980;",
+    "expected_result": "The Godfather, Taxi Driver"
+  },
+  {
+    "question": "How many movies were released after 2020?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT COUNT(*) FROM movies WHERE release_year > 2020;",
+    "expected_result": "3"
+  },
+  {
+    "question": "Which movie is in French?",
+    "difficulty": "easy",
+    "category": "basic",
+    "expected_sql": "SELECT title FROM movies WHERE language = 'French';",
+    "expected_result": "Amélie"
+  },
+  {
+    "question": "Which movies did Christopher Nolan direct?",
     "difficulty": "medium",
     "category": "relational",
     "expected_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.movie_id = md.movie_id JOIN directors d ON md.director_id = d.director_id WHERE d.name = 'Christopher Nolan';",
-    "expected_result": "Inception, Interstellar, Oppenheimer"
+    "expected_result": "The Dark Knight, Inception, Interstellar, Oppenheimer, Tenet, Dunkirk, Memento"
   },
   {
-    "question": "Which directors have the highest average movie rating?",
+    "question": "Which actors appeared in Inception?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT a.name FROM actors a JOIN movie_actors ma ON a.actor_id = ma.actor_id JOIN movies m ON ma.movie_id = m.movie_id WHERE m.title = 'Inception';",
+    "expected_result": "Leonardo DiCaprio, Joseph Gordon-Levitt, Elliot Page"
+  },
+  {
+    "question": "Who directed Parasite?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT d.name FROM directors d JOIN movie_directors md ON d.director_id = md.director_id JOIN movies m ON md.movie_id = m.movie_id WHERE m.title = 'Parasite';",
+    "expected_result": "Bong Joon-ho"
+  },
+  {
+    "question": "Which movies feature Robert De Niro?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT m.title FROM movies m JOIN movie_actors ma ON m.movie_id = ma.movie_id JOIN actors a ON ma.actor_id = a.actor_id WHERE a.name = 'Robert De Niro';",
+    "expected_result": "Goodfellas, The Departed, Taxi Driver, Casino"
+  },
+  {
+    "question": "Which movies did Steven Spielberg direct?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.movie_id = md.movie_id JOIN directors d ON md.director_id = d.director_id WHERE d.name = 'Steven Spielberg';",
+    "expected_result": "Saving Private Ryan, Schindler's List, Jurassic Park, Catch Me If You Can"
+  },
+  {
+    "question": "Which movies star Leonardo DiCaprio?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT m.title FROM movies m JOIN movie_actors ma ON m.movie_id = ma.movie_id JOIN actors a ON ma.actor_id = a.actor_id WHERE a.name = 'Leonardo DiCaprio';",
+    "expected_result": "Inception, The Departed, Django Unchained, Catch Me If You Can"
+  },
+  {
+    "question": "What genres does Inception belong to?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT g.name FROM genres g JOIN movie_genres mg ON g.genre_id = mg.genre_id JOIN movies m ON mg.movie_id = m.movie_id WHERE m.title = 'Inception';",
+    "expected_result": "Sci-Fi, Thriller, Action"
+  },
+  {
+    "question": "Who directed The Matrix?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT d.name FROM directors d JOIN movie_directors md ON d.director_id = md.director_id JOIN movies m ON md.movie_id = m.movie_id WHERE m.title = 'The Matrix';",
+    "expected_result": "Lana Wachowski, Lilly Wachowski"
+  },
+  {
+    "question": "Which movies feature Tom Hanks?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT m.title FROM movies m JOIN movie_actors ma ON m.movie_id = ma.movie_id JOIN actors a ON ma.actor_id = a.actor_id WHERE a.name = 'Tom Hanks';",
+    "expected_result": "Forrest Gump, Saving Private Ryan, Toy Story, Catch Me If You Can"
+  },
+  {
+    "question": "Which movies did Hayao Miyazaki direct?",
+    "difficulty": "medium",
+    "category": "relational",
+    "expected_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.movie_id = md.movie_id JOIN directors d ON md.director_id = d.director_id WHERE d.name = 'Hayao Miyazaki';",
+    "expected_result": "Spirited Away, Princess Mononoke, My Neighbor Totoro"
+  },
+  {
+    "question": "Which director has the highest average movie rating?",
     "difficulty": "hard",
     "category": "aggregation",
-    "expected_sql": "SELECT d.name, AVG(r.rating) AS avg_rating FROM directors d JOIN movie_directors md ON d.director_id = md.director_id JOIN ratings r ON md.movie_id = r.movie_id GROUP BY d.name ORDER BY avg_rating DESC;",
-    "expected_result": "Hayao Miyazaki"
+    "expected_sql": "SELECT d.name, AVG(r.rating) AS avg_rating FROM directors d JOIN movie_directors md ON d.director_id = md.director_id JOIN ratings r ON md.movie_id = r.movie_id GROUP BY d.name ORDER BY avg_rating DESC LIMIT 1;",
+    "expected_result": "Frank Darabont"
   },
   {
     "question": "Which genre has the highest average rating?",
     "difficulty": "hard",
     "category": "aggregation",
     "expected_sql": "SELECT g.name, AVG(r.rating) AS avg_rating FROM genres g JOIN movie_genres mg ON g.genre_id = mg.genre_id JOIN ratings r ON mg.movie_id = r.movie_id GROUP BY g.name ORDER BY avg_rating DESC LIMIT 1;",
-    "expected_result": "Animation"
+    "expected_result": "Crime"
+  },
+  {
+    "question": "Which genre has the most movies?",
+    "difficulty": "hard",
+    "category": "aggregation",
+    "expected_sql": "SELECT g.name, COUNT(*) AS movie_count FROM genres g JOIN movie_genres mg ON g.genre_id = mg.genre_id GROUP BY g.name ORDER BY movie_count DESC LIMIT 1;",
+    "expected_result": "Drama"
+  },
+  {
+    "question": "How many ratings are there in total?",
+    "difficulty": "medium",
+    "category": "aggregation",
+    "expected_sql": "SELECT COUNT(*) FROM ratings;",
+    "expected_result": "50"
+  },
+  {
+    "question": "Which director has directed the most movies?",
+    "difficulty": "hard",
+    "category": "aggregation",
+    "expected_sql": "SELECT d.name, COUNT(*) AS movie_count FROM directors d JOIN movie_directors md ON d.director_id = md.director_id GROUP BY d.name ORDER BY movie_count DESC LIMIT 1;",
+    "expected_result": "Christopher Nolan"
+  },
+  {
+    "question": "How many movies belong to the Animation genre?",
+    "difficulty": "medium",
+    "category": "aggregation",
+    "expected_sql": "SELECT COUNT(*) FROM movie_genres mg JOIN genres g ON mg.genre_id = g.genre_id WHERE g.name = 'Animation';",
+    "expected_result": "6"
+  },
+  {
+    "question": "Which language has the most movies?",
+    "difficulty": "hard",
+    "category": "aggregation",
+    "expected_sql": "SELECT language, COUNT(*) AS movie_count FROM movies GROUP BY language ORDER BY movie_count DESC LIMIT 1;",
+    "expected_result": "English"
+  },
+  {
+    "question": "How many movies are in the Crime genre?",
+    "difficulty": "medium",
+    "category": "aggregation",
+    "expected_sql": "SELECT COUNT(*) FROM movie_genres mg JOIN genres g ON mg.genre_id = g.genre_id WHERE g.name = 'Crime';",
+    "expected_result": "17"
+  },
+  {
+    "question": "How many directors have directed only one movie?",
+    "difficulty": "hard",
+    "category": "aggregation",
+    "expected_sql": "SELECT COUNT(*) FROM (SELECT director_id FROM movie_directors GROUP BY director_id HAVING COUNT(*) = 1) sub;",
+    "expected_result": "20"
+  },
+  {
+    "question": "Which genres have an average rating above 8.4?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT g.name, AVG(r.rating) AS avg_rating FROM genres g JOIN movie_genres mg ON g.genre_id = mg.genre_id JOIN ratings r ON mg.movie_id = r.movie_id GROUP BY g.name HAVING AVG(r.rating) > 8.4 ORDER BY avg_rating DESC;",
+    "expected_result": "Crime, Biography, War, Drama"
+  },
+  {
+    "question": "Which directors have directed more than three movies?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT d.name, COUNT(*) AS movie_count FROM directors d JOIN movie_directors md ON d.director_id = md.director_id GROUP BY d.name HAVING COUNT(*) > 3 ORDER BY movie_count DESC;",
+    "expected_result": "Christopher Nolan, Quentin Tarantino, Martin Scorsese, Steven Spielberg"
+  },
+  {
+    "question": "Among directors who have directed more than one movie, who has the highest average rating?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT d.name, AVG(r.rating) AS avg_rating FROM directors d JOIN movie_directors md ON d.director_id = md.director_id JOIN ratings r ON md.movie_id = r.movie_id GROUP BY d.name HAVING COUNT(*) > 1 ORDER BY avg_rating DESC LIMIT 1;",
+    "expected_result": "David Fincher"
+  },
+  {
+    "question": "Which actors have appeared in more than three movies?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT a.name, COUNT(*) AS movie_count FROM actors a JOIN movie_actors ma ON a.actor_id = ma.actor_id GROUP BY a.name HAVING COUNT(*) > 3 ORDER BY movie_count DESC;",
+    "expected_result": "Tom Hanks, Leonardo DiCaprio, Robert De Niro"
+  },
+  {
+    "question": "Which movies released after 2015 have a rating above 8?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT m.title FROM movies m JOIN ratings r ON m.movie_id = r.movie_id WHERE m.release_year > 2015 AND r.rating > 8;",
+    "expected_result": "Joker, Oppenheimer, Parasite"
+  },
+  {
+    "question": "Which directors have an average rating below 8?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT d.name, AVG(r.rating) AS avg_rating FROM directors d JOIN movie_directors md ON d.director_id = md.director_id JOIN ratings r ON md.movie_id = r.movie_id GROUP BY d.name HAVING AVG(r.rating) < 8 ORDER BY avg_rating;",
+    "expected_result": "Denis Villeneuve, Jordan Peele, Greta Gerwig"
+  },
+  {
+    "question": "Which genres appear in fewer than three movies?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT g.name, COUNT(*) AS movie_count FROM genres g JOIN movie_genres mg ON g.genre_id = mg.genre_id GROUP BY g.name HAVING COUNT(*) < 3;",
+    "expected_result": "Musical, Horror"
+  },
+  {
+    "question": "Which Christopher Nolan movies have a rating above 8.5?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT m.title FROM movies m JOIN movie_directors md ON m.movie_id = md.movie_id JOIN directors d ON md.director_id = d.director_id JOIN ratings r ON m.movie_id = r.movie_id WHERE d.name = 'Christopher Nolan' AND r.rating > 8.5;",
+    "expected_result": "The Dark Knight, Inception, Interstellar"
+  },
+  {
+    "question": "How many movies were directed by directors who have directed more than one movie?",
+    "difficulty": "hard",
+    "category": "complex",
+    "expected_sql": "SELECT COUNT(*) FROM movie_directors md WHERE md.director_id IN (SELECT director_id FROM movie_directors GROUP BY director_id HAVING COUNT(*) > 1);",
+    "expected_result": "32"
   }
 ]

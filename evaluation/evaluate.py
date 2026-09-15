@@ -35,6 +35,24 @@ def _result_to_text(rows) -> str:
     return ", ".join(vals)
 
 
+def _is_execution_correct(expected: str, result_text: str) -> bool:
+    """Loose, order-independent containment check.
+
+    A single-value expectation (e.g. a count or one name) just needs to
+    appear as a substring. A comma-separated multi-item expectation (e.g.
+    a list of movie titles) is split into tokens and each token is checked
+    independently, since the SQL the LLM writes is free to return matching
+    rows in a different order than `expected_result` was written in.
+    """
+    if not expected or not result_text:
+        return False
+    tokens = [t.strip() for t in expected.split(",") if t.strip()]
+    if len(tokens) <= 1:
+        return expected.lower() in result_text.lower()
+    result_lower = result_text.lower()
+    return all(tok.lower() in result_lower for tok in tokens)
+
+
 def evaluate() -> pd.DataFrame:
     questions = json.loads(QUESTIONS_PATH.read_text())
     records = []
@@ -51,10 +69,7 @@ def evaluate() -> pd.DataFrame:
         result_text = _result_to_text(rows)
         expected = str(item.get("expected_result", "")).strip()
 
-        # Loose containment check; refine per question type as needed.
-        execution_correct = bool(
-            sql_valid and expected and expected.lower() in result_text.lower()
-        )
+        execution_correct = bool(sql_valid and _is_execution_correct(expected, result_text))
 
         records.append({
             "question": q,
@@ -76,7 +91,24 @@ def evaluate() -> pd.DataFrame:
     if total:
         print(f"SQL validity       : {df['sql_valid'].mean():.0%}")
         print(f"Execution accuracy : {df['execution_correct'].mean():.0%}")
-    print(f"Results written to : {RESULTS_PATH}")
+        print(f"Avg repair retries : {df['retry_count'].mean():.2f}")
+
+        print("\nBy difficulty:")
+        by_difficulty = df.groupby("difficulty").agg(
+            n=("question", "count"),
+            sql_valid=("sql_valid", "mean"),
+            execution_correct=("execution_correct", "mean"),
+        )
+        print(by_difficulty.to_string(float_format=lambda v: f"{v:.0%}"))
+
+        print("\nBy category:")
+        by_category = df.groupby("category").agg(
+            n=("question", "count"),
+            sql_valid=("sql_valid", "mean"),
+            execution_correct=("execution_correct", "mean"),
+        )
+        print(by_category.to_string(float_format=lambda v: f"{v:.0%}"))
+    print(f"\nResults written to : {RESULTS_PATH}")
     return df
 
 
