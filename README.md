@@ -42,9 +42,10 @@ movie-text-to-sql/
 │   ├── model.py
 │   ├── prompts.py
 │   └── sql_generator.py
-├── database/         # schema.sql, seed.sql, README (ER diagram)
-├── evaluation/       # questions.json, evaluate.py, results.csv
+├── database/         # schema.sql, curated 50-movie seed.sql, README (ER diagram)
+├── evaluation/       # questions.json (38 Qs), evaluate.py, results.csv
 ├── tests/            # smoke tests
+├── docs/             # ARCHITECTURE.md — file-by-file technical reference
 ├── config.py         # env-driven settings
 ├── db.py             # SQLAlchemy engine + schema introspection
 ├── docker-compose.yml
@@ -52,6 +53,9 @@ movie-text-to-sql/
 ├── .env.example
 └── README.md
 ```
+
+For a detailed, file-by-file walkthrough of how every module is wired
+together, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Quick start
 
@@ -88,7 +92,7 @@ streamlit run app/streamlit_app.py
 Or run one question from the command line:
 
 ```bash
-python -m agent.graph "Which directors have the highest average movie rating?"
+python -m agent.graph "Which directors have directed more than three movies?"
 ```
 
 ### 5. Evaluate
@@ -96,6 +100,30 @@ python -m agent.graph "Which directors have the highest average movie rating?"
 ```bash
 python evaluation/evaluate.py   # writes evaluation/results.csv
 ```
+
+Runs all 38 questions in `evaluation/questions.json` (10 basic / 10
+relational / 9 aggregation / 9 complex) through the agent and prints SQL
+validity and execution accuracy, both overall and broken down by difficulty
+and category.
+
+## Dataset
+
+`database/seed.sql` is a curated, internally-consistent set of 50 real,
+well-known movies (1972–2023): 29 directors, 121 actors (with per-movie
+`role`), 15 genres, and one rating per movie. See
+[database/README.md](database/README.md) for the full breakdown and ER
+diagram.
+
+## Model choice
+
+The default (`LLM_MODEL` in `.env`) is
+`meta-llama/llama-3.1-8b-instruct:free` on OpenRouter — a free-tier model,
+so the project runs end-to-end with no API cost. `llm/model.py` accepts a
+`model` override, so swapping in a stronger model (e.g. a paid
+Claude/GPT/Gemini slug on OpenRouter) for comparison only requires changing
+`LLM_MODEL` — no other code changes. SQL generation and repair both use
+`temperature=0` for determinism; only the final answer-formatting step uses
+a small positive temperature for more natural prose.
 
 ## Development phases (from the project doc)
 
@@ -106,26 +134,4 @@ python evaluation/evaluate.py   # writes evaluation/results.csv
 5. **Error correction** — `SQL error → LLM → corrected SQL → execution`.
 6. **UI** — build the Streamlit interface.
 7. **Evaluation** — run the prepared question set and compare results.
-8. **Final experiments** — compare models, analyze strengths/weaknesses.
-
-## Team division
-
-| Member | Area | Owns |
-|--------|------|------|
-| 1 | Database & Data Engineering | `database/` (schema, seed, ER diagram) |
-| 2 | LLM & LangChain | `llm/` (model, prompts, sql_generator) |
-| 3 | LangGraph & SQL Agent | `agent/` (state, graph, nodes) |
-| 4 | Application, Evaluation & Testing | `app/`, `evaluation/`, `tests/` |
-
-Shared: repo organization, architecture decisions, dataset/question design,
-integration, final report & presentation. Define interfaces early — don't
-develop components fully independently until the last week.
-
-## Notes
-
-- The initial system is restricted to **SELECT** queries only (validated in
-  `agent/nodes/validate.py`).
-- `database/seed.sql` currently holds a small illustrative sample so the
-  pipeline runs end-to-end; Member 1 replaces it with the curated ~50-movie
-  dataset.
-- Secrets live in `.env` (git-ignored). Never commit real API keys.
+8. **Final experiments** — compare models, analyze strengths/weaknesses. 
